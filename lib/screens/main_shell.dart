@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../data/family_repository.dart';
+import '../data/session.dart';
 import '../theme/app_colors.dart';
-import '../widgets/app_background.dart';
+import 'analysis_screen.dart';
+import 'child_home_screen.dart';
+import 'family_screen.dart';
+import 'feedback_screen.dart';
 import 'home_screen.dart';
+import 'plan_screen.dart';
+import 'transaction_screen.dart';
 
-/// Kerangka utama dengan navigasi bawah: Beranda, Transaksi, Analisis, Plan, Keluarga.
-/// Tab selain Beranda masih kerangka, diisi pada langkah berikutnya.
+/// Kerangka utama dengan navigasi bawah. Menyesuaikan peran:
+/// Kepala Keluarga dan Pasangan melihat 5 menu, Anak hanya 3 menu (ROL_010).
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -20,16 +27,55 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: FamilyRepository.instance,
+      builder: (context, _) => _buildShell(),
+    );
+  }
+
+  Widget _buildShell() {
+    final isChild = Session.role == FamilyRole.anak;
+
+    final pages = isChild
+        ? <Widget>[
+            ChildHomeScreen(onNavigate: _go),
+            const TransactionScreen(),
+            const FeedbackScreen(),
+          ]
+        : <Widget>[
+            HomeScreen(onNavigate: _go),
+            const TransactionScreen(),
+            AnalysisScreen(onNavigate: _go),
+            const PlanScreen(),
+            const FamilyScreen(),
+          ];
+
+    final destinations = isChild
+        ? const [
+            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Beranda'),
+            NavigationDestination(icon: Icon(Icons.add_rounded), label: 'Catat'),
+            NavigationDestination(icon: Icon(Icons.chat_bubble_outline_rounded), label: 'Umpan Balik'),
+          ]
+        : const [
+            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Beranda'),
+            NavigationDestination(icon: Icon(Icons.add_rounded), label: 'Transaksi'),
+            NavigationDestination(icon: Icon(Icons.bar_chart_rounded), label: 'Analisis'),
+            NavigationDestination(icon: Icon(Icons.calendar_month_outlined), label: 'Plan'),
+            NavigationDestination(icon: Icon(Icons.group_outlined), selectedIcon: Icon(Icons.group_rounded), label: 'Keluarga'),
+          ];
+
+    if (_index >= pages.length) _index = 0;
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: IndexedStack(
-        index: _index,
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          HomeScreen(onNavigate: _go),
-          const _ComingSoonTab(title: 'Layar Transaksi'),
-          const _ComingSoonTab(title: 'Layar Analisis'),
-          const _ComingSoonTab(title: 'Layar Plan'),
-          const _ComingSoonTab(title: 'Layar Keluarga'),
+          for (var i = 0; i < pages.length; i++)
+            Offstage(
+              offstage: i != _index,
+              child: TickerMode(enabled: i == _index, child: pages[i]),
+            ),
         ],
       ),
       bottomNavigationBar: NavigationBarTheme(
@@ -56,56 +102,9 @@ class _MainShellState extends State<MainShell> {
         child: NavigationBar(
           selectedIndex: _index,
           onDestinationSelected: _go,
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Beranda'),
-            NavigationDestination(icon: Icon(Icons.add_rounded), label: 'Transaksi'),
-            NavigationDestination(icon: Icon(Icons.bar_chart_rounded), label: 'Analisis'),
-            NavigationDestination(icon: Icon(Icons.calendar_month_outlined), label: 'Plan'),
-            NavigationDestination(icon: Icon(Icons.group_outlined), selectedIcon: Icon(Icons.group_rounded), label: 'Keluarga'),
-          ],
+          destinations: destinations,
         ),
       ),
-    );
-  }
-}
-
-class _ComingSoonTab extends StatelessWidget {
-  const _ComingSoonTab({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const Positioned.fill(child: AppBackground()),
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(26),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.6,
-                    color: AppColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Layar ini dibuat pada langkah berikutnya.',
-                  style: TextStyle(fontSize: 15, color: AppColors.body),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

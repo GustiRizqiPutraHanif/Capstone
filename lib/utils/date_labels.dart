@@ -3,6 +3,10 @@ const _bulan = [
   'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
 ];
 
+/// 3 Nov 2026
+String formatDate(DateTime date) =>
+    '${date.day} ${_bulan[date.month - 1]} ${date.year}';
+
 /// "Hari ini", "Kemarin", "2 hari lalu", atau tanggal untuk yang lebih lama.
 String relativeDay(DateTime date, DateTime now) {
   final day = DateTime(date.year, date.month, date.day);
@@ -11,5 +15,13 @@ String relativeDay(DateTime date, DateTime now) {
   if (diff <= 0) return 'Hari ini';
   if (diff == 1) return 'Kemarin';
   if (diff < 7) return '$diff hari lalu';
-  return '${day.day} ${_bulan[day.month - 1]} ${day.year}';
+  return formatDate(day);
 }
+
+const _bulanPanjang = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
+
+/// "November 2026"
+String monthName(DateTime date) => '${_bulanPanjang[date.month - 1]} ${date.year}';

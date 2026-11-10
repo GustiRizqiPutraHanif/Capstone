@@ -29,5 +29,12 @@ class UsageSummary {
 
   double get ratio => limit <= 0 ? (used > 0 ? 1.0 : 0.0) : used / limit;
   int get percent => (ratio * 100).round();
-  UsageStatus get status => usageStatusFor(ratio);
+  /// Memakai bilangan bulat agar ambang tepat di 70%, 90%, dan 100%.
+  UsageStatus get status {
+    if (limit <= 0) return used > 0 ? UsageStatus.melebihi : UsageStatus.aman;
+    if (used >= limit) return UsageStatus.melebihi;
+    if (used * 10 >= limit * 9) return UsageStatus.merah;
+    if (used * 10 >= limit * 7) return UsageStatus.waspada;
+    return UsageStatus.aman;
+  }
 }

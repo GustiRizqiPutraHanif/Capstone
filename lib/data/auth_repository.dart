@@ -30,15 +30,35 @@ class AuthRepository {
   void reset() {
     _users
       ..clear()
-      ..add(
+      ..addAll([
         AppUser(
           name: 'Budi Santoso',
           email: 'budi.santoso@example.com',
           password: 'Keluarga123',
           setupDone: true,
         ),
-      );
+        AppUser(
+          name: 'Siti Santoso',
+          email: 'siti.santoso@example.com',
+          password: 'Keluarga123',
+          setupDone: true,
+        ),
+        AppUser(
+          name: 'Andi Santoso',
+          email: 'andi.santoso@example.com',
+          password: 'Keluarga123',
+          setupDone: true,
+        ),
+      ]);
     currentUser = null;
+  }
+
+  /// Nama tampilan akun (email jika tidak ditemukan).
+  String nameOf(String email) {
+    for (final user in _users) {
+      if (user.email == email) return user.name;
+    }
+    return email;
   }
 
   String _normalize(String email) => email.trim().toLowerCase();

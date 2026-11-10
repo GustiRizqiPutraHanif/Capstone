@@ -14,6 +14,10 @@ class AppTextField extends StatefulWidget {
     this.validator,
     this.obscure = false,
     this.prefix,
+    this.readOnly = false,
+    this.maxLines = 1,
+    this.minLines,
+    this.onTap,
     this.inputFormatters,
     this.keyboardType,
     this.textInputAction,
@@ -28,6 +32,10 @@ class AppTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final bool obscure;
   final String? prefix;
+  final bool readOnly;
+  final int maxLines;
+  final int? minLines;
+  final VoidCallback? onTap;
   final List<TextInputFormatter>? inputFormatters;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
@@ -67,6 +75,10 @@ class _AppTextFieldState extends State<AppTextField> {
         TextFormField(
           controller: widget.controller,
           obscureText: _hidden,
+          maxLines: widget.obscure ? 1 : widget.maxLines,
+          minLines: widget.obscure ? 1 : widget.minLines,
+          readOnly: widget.readOnly,
+          onTap: widget.onTap,
           inputFormatters: widget.inputFormatters,
           keyboardType: widget.keyboardType,
           textInputAction: widget.textInputAction,

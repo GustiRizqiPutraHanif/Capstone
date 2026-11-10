@@ -16,6 +16,8 @@ class Transaction {
     required this.kategori,
     required this.date,
     this.note = '',
+    this.authorEmail = '',
+    this.isPersonal = false,
   });
 
   final String id;
@@ -24,4 +26,10 @@ class Transaction {
   final Kategori kategori;
   final DateTime date;
   final String note;
+
+  /// Akun yang mencatat transaksi.
+  final String authorEmail;
+
+  /// true = transaksi pribadi Anak (dihitung dari jatah, bukan dari batas keluarga).
+  final bool isPersonal;
 }

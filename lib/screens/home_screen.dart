@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../data/auth_repository.dart';
+import '../data/session.dart';
 import '../data/finance_repository.dart';
 import '../data/transaction_repository.dart';
-import '../models/transaction.dart';
 import '../models/usage_status.dart';
 import '../theme/app_colors.dart';
 import '../theme/status_style.dart';
 import '../utils/date_labels.dart';
 import '../utils/rupiah.dart';
 import '../widgets/app_background.dart';
+import '../widgets/transaction_tile.dart';
+import 'feedback_screen.dart';
+import 'history_screen.dart';
 import 'login_screen.dart';
 
 /// Beranda: sisa uang bebas belanja, pemakaian batas, menu cepat, transaksi terbaru.
@@ -27,21 +30,22 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  void _comingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('$feature dibuat pada langkah berikutnya.')));
-  }
-
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: TransactionRepository.instance,
+      builder: (context, _) => _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     final user = AuthRepository.instance.currentUser;
-    final email = user?.email ?? '';
+    final email = Session.spaceId;
     final finance = FinanceRepository.instance.of(email);
     final repo = TransactionRepository.instance;
     final transactions = repo.all(email);
     final limit = finance?.setup.sisa ?? 0;
-    final summary = UsageSummary(used: repo.usedLimit(email), limit: limit);
+    final summary = UsageSummary(used: repo.usedLimitInMonth(email, DateTime.now()), limit: limit);
 
     final first = (user?.name ?? '').trim().split(' ').first;
     final greeting = 'Halo, ${first.isEmpty ? 'Keluarga' : first}!';
@@ -67,20 +71,41 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 22),
                     _buildQuickActions(context),
                     const SizedBox(height: 24),
-                    const Text(
-                      'Transaksi terbaru',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
-                      ),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Transaksi terbaru',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(builder: (_) => const HistoryScreen()),
+                          ),
+                          child: const Text(
+                            'Lihat semua',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.accentDeep,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     if (transactions.isEmpty)
                       _buildEmpty()
                     else
                       for (final item in transactions.take(3)) ...[
-                        _TransactionTile(transaction: item),
+                        TransactionTile(
+                          transaction: item,
+                          dateText: relativeDay(item.date, DateTime.now()),
+                        ),
                         const SizedBox(height: 10),
                       ],
                   ],
@@ -260,7 +285,9 @@ class HomeScreen extends StatelessWidget {
         _QuickAction(
           icon: Icons.chat_bubble_outline_rounded,
           label: 'Umpan Balik',
-          onTap: () => _comingSoon(context, 'Umpan Balik'),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const FeedbackScreen(showBack: true)),
+          ),
         ),
       ],
     );
@@ -322,71 +349,6 @@ class _QuickAction extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _TransactionTile extends StatelessWidget {
-  const _TransactionTile({required this.transaction});
-
-  final Transaction transaction;
-
-  IconData get _icon => switch (transaction.kategori) {
-        Kategori.primer => Icons.shopping_basket_outlined,
-        Kategori.sekunder => Icons.local_cafe_outlined,
-        Kategori.tersier => Icons.diamond_outlined,
-      };
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.fieldBorder),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.softFill,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(_icon, color: AppColors.accentDeep, size: 24),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  transaction.name,
-                  style: const TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
-                  ),
-                ),
-                Text(
-                  '${transaction.kategori.label} · ${relativeDay(transaction.date, DateTime.now())}',
-                  style: const TextStyle(fontSize: 13, color: AppColors.body),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            '−${formatRupiah(transaction.amount)}',
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: AppColors.ink,
-            ),
-          ),
-        ],
       ),
     );
   }

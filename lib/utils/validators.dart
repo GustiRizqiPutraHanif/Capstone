@@ -28,4 +28,24 @@ abstract final class Validators {
     if (confirm != original) return 'Konfirmasi password tidak sama';
     return null;
   }
+
+  /// Harga transaksi: wajib diisi dan harus lebih dari 0 (TRX_015).
+  static String? price(String? value) {
+    if (value == null || value.trim().isEmpty) return 'Harga wajib diisi';
+    final parsed = int.tryParse(value.replaceAll('.', '').trim());
+    if (parsed == null || parsed <= 0) return 'Harga harus lebih dari 0';
+    return null;
+  }
+
+  /// Umpan balik: tidak boleh kosong dan maksimal [maxFeedbackLength] karakter.
+  static const maxFeedbackLength = 500;
+
+  static String? feedback(String? value) {
+    final text = value ?? '';
+    if (text.trim().isEmpty) return 'Umpan balik tidak boleh kosong';
+    if (text.length > maxFeedbackLength) {
+      return 'Umpan balik maksimal $maxFeedbackLength karakter';
+    }
+    return null;
+  }
 }
